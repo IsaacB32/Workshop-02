@@ -10,14 +10,5 @@ public class PlayerInputManager : MonoBehaviour
         playerMovement = GetComponent<PlayerMovement>();
     }
 
-    public void Move(InputAction.CallbackContext context)
-    {
-        Vector2 movement = context.ReadValue<Vector2>();
-        playerMovement.UpdateMovement(movement.x);
-    }
-
-    public void Jump(InputAction.CallbackContext context)
-    {
-        if (context.started) playerMovement.JumpPlayer();
-    }
+    
 }
