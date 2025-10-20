@@ -3,10 +3,10 @@ using UnityEngine.Events;
 
 public class PlayerMovement : MonoBehaviour
 {
-	private static readonly int Walking = Animator.StringToHash("walking");
-	private static readonly int Jump = Animator.StringToHash("jump");
-	private static readonly int Fall = Animator.StringToHash("fall");
-	
+	private static readonly int Speed = Animator.StringToHash("speed");
+	private static readonly int SpeedY = Animator.StringToHash("speedY");
+	private static readonly int IsFalling = Animator.StringToHash("isFalling");
+
 	public Animator playerAnimator;
 	[Space]
 	
@@ -26,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
 	[Space]
 	public UnityEvent OnLandEvent;
 
+	private float movement = 0;
 	private void Awake()
 	{
 		m_Rigidbody2D = GetComponent<Rigidbody2D>();
@@ -47,22 +48,35 @@ public class PlayerMovement : MonoBehaviour
 			if (!wasGrounded)
 				OnLandEvent.Invoke();
 		}
+		else m_Grounded = false;
+
+		Move();
+	}
+
+	private void LateUpdate()
+	{
+		playerAnimator.SetFloat(Speed, Mathf.Abs(movement));
+		playerAnimator.SetFloat(SpeedY, m_Rigidbody2D.linearVelocityY);
+		playerAnimator.SetBool(IsFalling, !m_Grounded);
+	}
+	
+	public void UpdateMovement(float move)
+	{
+		movement = move;
 	}
 
 
-	public void Move(float move, bool jump)
+	private void Move()
 	{
-		playerAnimator.SetBool(Walking, move != 0);
-
 		//only control the player if grounded or airControl is turned on
 		if (m_Grounded || m_AirControl)
 		{
 			// Move the character by finding the target velocity
-			Vector3 targetVelocity = new Vector2(move * 10f, m_Rigidbody2D.linearVelocity.y);
+			Vector3 targetVelocity = new Vector2(movement * 10f, m_Rigidbody2D.linearVelocity.y);
 			// And then smoothing it out and applying it to the character
 			m_Rigidbody2D.linearVelocity = Vector3.SmoothDamp(m_Rigidbody2D.linearVelocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
 
-			switch (move)
+			switch (movement)
 			{
 				case > 0 when !m_FacingRight:
 				case < 0 when m_FacingRight:
@@ -70,18 +84,15 @@ public class PlayerMovement : MonoBehaviour
 					break;
 			}
 		}
+	}
+
+	public void JumpPlayer()
+	{
 		// If the player should jump...
-		if (m_Grounded && jump)
+		if (m_Grounded)
 		{
 			// Add a vertical force to the player.
-			m_Grounded = false;
 			m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
-			playerAnimator.SetTrigger(Jump);
-		}
-
-		if (!m_Grounded)
-		{
-			playerAnimator.SetTrigger(Fall);
 		}
 	}
 
